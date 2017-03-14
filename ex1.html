@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+</head>
+<body>
+<p>With absolute positioning, an element can be placed anywhere on a page. The heading below is placed 100px from the left of the page and 150px from the top of the page.</p>
+
+<div id="eric" style="left:-400px;width:600px;height:300px; border:1px solid red;">
+	<span style="position:relative; top:50px;left:50px;border:1px solid green;">
+    	<span style="border:1px solid blue; width:60px;">center</span>
+        <span style="position:absolute;top:-30px;left:50px;">
+        	<span>new one</span>
+            <span style="position:absolute;top:-30px;left:50px;">
+        		<span >new 11</span>
+        	</span>
+        </span>
+        <span style="position:absolute;top:-30px;left:-50px;">
+        	<span >new 2</span>
+        </span>
+        <span style="position:absolute;top:40px;left:-50px;">
+        	<span >new 3</span>
+        </span>
+        <svg height="410" width="800" style="position:absolute;top:-220px;left:50px;">
+	<defs>
+		<marker id="to" style="stroke: #ff7f0e; fill: #ff7f0e; stroke-width: 1.5px;" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        	<path d="M 0 0 L 10 5 L 0 10 z"></path>			
+        </marker>
+     </defs>
+     <g transform="translate(0,0)">
+     <path style="stroke: #ff7f0e; fill: none; stroke-width: 1.5px;" d="M0,325C125,325 125,32.5 250,32.5" marker-end="url(#to)" />
+     <path style="stroke: #ff7f0e; fill: none; stroke-width: 1.5px;" d="M0,325C125,325 125,182.5 250,182.5" marker-end="url(#to)" />
+     <path style="stroke: #ff7f0e; fill: none; stroke-width: 1.5px;" d="M0,325C125,325 125,290.5 250,290.5" marker-end="url(#to)" />
+     </g>
+  Sorry, your browser does not support inline SVG.
+</svg>
+    </span>
+</div>
+
+</body>
+</html>
