@@ -6,16 +6,90 @@
   crossorigin="anonymous"></script>
 </head>
 <body>
-<div style="position: absolute;left: 50%;top: 50%;" onmouseover="mouseOver(this)"><span name="act" onclick="addLeaf()" style="display:none;">+</span><span style="border: 2px #00f solid;">root</span></div>
+<div id="canvas">
+</div>
 
 <script type="text/javascript">
-	function mouseOver(cur) {
-		$(cur).find("span[name='act']").show();
+	var GLOBAL_VARIABLES = {
+		version:0.0.1,
+		id:{
+			toward:1,
+			level:3,
+			order:4
+		},
+		data:{
+
+		},
+		stemWidth:80,
+		spaceBetweenLeaf:30
+
+	};
+
+	function padWithZero(binId) {
+		var gId = GLOBAL_VARIABLES.id;
+		var standardLength = gId.toward + gId.level + gId.order;
+
+		while (binId.length < standardLength) {
+			binId = "0" + binId;
+		}
+	}
+
+	function getLeftNodeByLevelOrder(data, level, order) {
+		if (0 === level) {
+			return data.left[order];
+		} else {
+			return getLeftNodeByLevelOrder(); 
+		}
+	}
+
+	function getNodeByTowardLevelOrder(toward, level, order) {
+		if (0 === toward) {
+			return getLeftNodeByLevelOrder(GLOBAL_VARIABLES.data, level, order);
+		} else {
+			return getRightNodeByLevelOrder(GLOBAL_VARIABLES.data, level, order);
+		}
+	}
+
+	function getNode(id) {
+		var binId = Number(id).toString(2);
+		var paddedBinId = padWithZero(binId);
+
+		var toward = parseInt(paddedBinId.substr(0, GLOBAL_VARIABLES.id.toward), 2);
+		var level = parseInt(paddedBinId.substr(GLOBAL_VARIABLES.id.toward, GLOBAL_VARIABLES.id.level), 2);
+		var order = parseInt(paddedBinId.substr((GLOBAL_VARIABLES.id.toward + GLOBAL_VARIABLES.id.level), GLOBAL_VARIABLES.id.order), 2);
+
+		return getNodeByTowardLevelOrder(toward, level, order);
+	}
+
+	function addRightNode(id) {
+
 	}
 	
-	function addLeaf() {
-		console.log("inaddleaf");
+	function drawRoot() {
+		var rootNodeHtml = "<div id='node0' style='position: absolute;left: 50%;top: 50%;'><div name='actions'><input type='text'><span onclick='addRightNode(0)'>+</span></div></div>";
+		$("#canvas").html(rootNodeHtml);
 	}
+
+	function drawNode() {
+		drawStem();
+		drawLeaf();
+	}
+	///////////// drawStem ///////////////////
+	// need to know: oriental:left|right, parent total child count, current th.
+	function drawStem() {
+
+	}
+
+
+	///////////// end drawStem ///////////////
+
+	///////////// drawLeaf ///////////////////
+	function drawLeaf() {
+
+	}
+	///////////// end drawLeaf ///////////////
+
+	drawRoot();
 </script>
 </body>
 </html>
