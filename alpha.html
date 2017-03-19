@@ -156,12 +156,12 @@
 				if (0 === leftOrRight) {//left
 					return "<span name='node' type='leaf' style='position:absolute;white-space: nowrap;'>"
 									+ "<span name='children'></span>"
+									+ "<span name='svg'></span>"
 									+ "<span name='actions'>"
 									+ 		"<span onclick='leftAdd(event)' style='margin:4px;'>+</span>"
 									+       "<input type='text' style='width:0;padding:0;border:0;margin:0;'>"
 									+		"<span name='txt' style='border:1px solid green;' contenteditable>new</span>"
 									+ "</span>"
-									+ "<span name='svg'></span>"
 							+ "</span>";
 				} else {//right
 					return  "<span name='node' type='leaf' style='position:absolute;'>"
