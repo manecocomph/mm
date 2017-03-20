@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<title>Mindmap version: 0.0.1</title>
+		<meta charset="UTF-8">
 		<script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha256-/SIrNqv8h6QGKDuNoLGA4iret+kyesCkHGzVUUV0shc=" crossorigin="anonymous"></script>
 		<style type="text/css">
 			html, body {
@@ -9,17 +10,34 @@
 			    height: 100%;
 			}
 
+			#stage {
+				background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAT0lEQVQ4T2N8/fr/fwYiADfPP4avX5gIqmQEGSgqyshISOW373//c3EyE1Q3aiDukBwNQ5xhQ/1kAwpsQomaFHnqu3A06+EM/9GcQr+cAgBGqZrSrFyxegAAAABJRU5ErkJggg=='); 
+				background-color: rgb(255, 255, 255); 
+				width: 3000px; 
+				height: 3000px;
+			}
+
+			span[name='txt'] {
+				border: 2px solid gray;
+    			padding: 1px 3px;
+    			border-radius: 8px;
+			}
+
+			.hidden {
+				width:0;padding:0;border:0;margin:0;
+			}
+
 		</style>
 	</head>
 	<body>
-		<div id="stage" style="background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAT0lEQVQ4T2N8/fr/fwYiADfPP4avX5gIqmQEGSgqyshISOW373//c3EyE1Q3aiDukBwNQ5xhQ/1kAwpsQomaFHnqu3A06+EM/9GcQr+cAgBGqZrSrFyxegAAAABJRU5ErkJggg=='); background-color: rgb(255, 255, 255); width: 3000px; height: 3000px;">
-			<span name="node" type="root" style="vertical-align: middle; position: relative; top: 1500px; left:1500px;">
-				<span name='leftChildren'></span>
+		<div id="stage">
+			<span name="node" type="root" style="vertical-align: middle; position: relative; top: 1500px; left:1400px;">
+				<span name='leftChildren' style='position: absolute;'></span>
 				<span name='leftSvg'></span>
-				<span name="actions" style="text-align: center;">
+				<span name="actions">
 					<span onclick="leftAdd(event)">+</span>
-					<input type="text" style="width:0;padding:0;border:0;margin:0;" autofocus>
-					<span name="txt" style="border:1px solid green;" contenteditable>goodbye</span>
+					<input type="text" class="hidden" autofocus>
+					<span name="txt" contenteditable>root</span>
 					<span onclick="rightAdd(event)">+</span>
 				</span>
 				<span name='rightSvg'></span>
@@ -28,7 +46,9 @@
 		</div>
 
 		<script type="text/javascript">
-			var gloablVar = {
+			var GLOBAL_DATA = {
+				LEFT_SIDE:0,
+				RIGHT_SIDE:1,
 				arrayWidth:90,
 				arrayHeight:40
 			};
@@ -36,8 +56,8 @@
 			function drawArray(childLeafCountArr, leftOrRight) {
 				var count = childLeafCountArr.reduce((a, b) => a + b, 0);
 				//console.log("count: " + count);
-				var svgWidth = gloablVar.arrayWidth;
-				var svgHeight = gloablVar.arrayHeight * (count - 1) + 20;
+				var svgWidth = GLOBAL_DATA.arrayWidth;
+				var svgHeight = GLOBAL_DATA.arrayHeight * (count - 1) + 20;
 
 				var svgHtml = "<svg name='svg' height='" + svgHeight + "' width='" + (svgWidth + 10) + "' style='vertical-align:middle;" + (0 == leftOrRight ? "transform: rotateY(180deg);" : "") + "'>";
 				svgHtml += "<defs><marker id='to' style='stroke: #ff7f0e; fill: #ff7f0e; stroke-width: 1.5px;' viewBox='0 0 10 10' refX='0' refY='5' markerWidth='6' markerHeight='6' orient='auto'><path d='M 0 0 L 10 5 L 0 10 z'></path></marker></defs>";
@@ -46,7 +66,7 @@
 				var fromHeight = svgHeight/2;
 				var virtualSum = 0;
 				for (var i = 0; i < childLeafCountArr.length; i++) {
-					var toHeight = 10 + (virtualSum + (childLeafCountArr[i] - 1)/ 2) * gloablVar.arrayHeight;
+					var toHeight = 10 + (virtualSum + (childLeafCountArr[i] - 1)/ 2) * GLOBAL_DATA.arrayHeight;
 					svgHtml += "<path style='stroke: #ff7f0e; fill: none; stroke-width: 1.5px;' d='M0," + fromHeight + "C" + svgWidth/2 + "," + fromHeight + " " + svgWidth/2 + "," + toHeight + " " + svgWidth + "," + toHeight + "' marker-end='url(#to)' />";
 					virtualSum += childLeafCountArr[i];
 				}
@@ -62,6 +82,10 @@
 				//console.log(node.attr("type"));
 				if ("root" == node.attr("type")) {
 					var childNodes = node.children("span[name='rightChildren']").children("span");
+					if (childNodes.length < 1) {
+						node.find("> span[name='rightSvg']").html("");
+						return;
+					}
 					var childLeafCountArr = [];
 					for (var i = 0; i < childNodes.length; i++) {
 						if ("leaf" === $(childNodes[i]).attr("type")) {
@@ -73,18 +97,47 @@
 
 					var virtualSum = 0;
 					var leafTotalCount = childLeafCountArr.reduce((a, b) => a + b, 0);
+					//console.log(childLeafCountArr);
 					for (var i = 0; i < childLeafCountArr.length; i++) {
-						//console.log(virtualSum + (childLeafCountArr[i] - leafTotalCount)/2);
-						$(childNodes[i]).css("top", (gloablVar.arrayHeight * (virtualSum + (childLeafCountArr[i] - leafTotalCount)/2 - (childLeafCountArr[i] - 1)/2))+ "px");
+						console.log(virtualSum + (childLeafCountArr[i] - leafTotalCount)/2 - (childLeafCountArr[i] - 1)/2);
+						$(childNodes[i]).css("top", (GLOBAL_DATA.arrayHeight * (virtualSum + (childLeafCountArr[i] - leafTotalCount)/2 - (childLeafCountArr[i] - 1)/2))+ "px");
 						virtualSum += childLeafCountArr[i];
 					};
 					
-					console.log(childLeafCountArr);
 					node.find("> span[name='rightSvg']").html(drawArray(childLeafCountArr, 1));
+
+					//redraw left part
+					childNodes = node.children("span[name='leftChildren']").children("span");
+					childLeafCountArr = [];
+					for (var i = 0; i < childNodes.length; i++) {
+						if ("leaf" === $(childNodes[i]).attr("type")) {
+							childLeafCountArr.push(1);
+						} else {
+							childLeafCountArr.push($(childNodes[i]).find("span[type='leaf']").length);
+						}
+					}
+
+					virtualSum = 0;
+					var leftLeafTotalCount = childLeafCountArr.reduce((a, b) => a + b, 0);
+					var delta = 0;
+					//console.log("leftLeafTotalCount: " + leftLeafTotalCount + "  rightleafTotalCount: " + leafTotalCount);
+					if (leafTotalCount > leftLeafTotalCount) {
+						delta = (leafTotalCount-leftLeafTotalCount)/2;
+					}
+					for (var i = 0; i < childLeafCountArr.length; i++) {
+						//console.log(virtualSum + (leafTotalCount-leftLeafTotalCount)/2);
+						$(childNodes[i]).css("top", (GLOBAL_DATA.arrayHeight * (virtualSum + delta))+ "px");
+						virtualSum += childLeafCountArr[i];
+					};
+					// end of redraw left part
 				} else {
 					rightAddRedraw(node.parent().closest("span[name='node']"));
-
 					var childNodes = node.children("span[name='children']").children("span");
+					//console.log("going to draw right svg(non-root):  " + childNodes.length);
+					if (childNodes.length < 1) {
+						node.find("> span[name='svg']").html("");
+						return;
+					}
 					var childLeafCountArr = [];
 					for (var i = 0; i < childNodes.length; i++) {
 						if ("leaf" === $(childNodes[i]).attr("type")) {
@@ -97,7 +150,7 @@
 					var virtualSum = 0;
 					var leafTotalCount = childLeafCountArr.reduce((a, b) => a + b, 0);
 					for (var i = 0; i < childLeafCountArr.length; i++) {
-						$(childNodes[i]).css("top", (gloablVar.arrayHeight * (virtualSum + (childLeafCountArr[i] - leafTotalCount)/2 - (childLeafCountArr[i] - 1)/2 + (leafTotalCount - 1)/2))+ "px");
+						$(childNodes[i]).css("top", (GLOBAL_DATA.arrayHeight * (virtualSum + (childLeafCountArr[i] - leafTotalCount)/2 - (childLeafCountArr[i] - 1)/2 + (leafTotalCount - 1)/2))+ "px");
 						virtualSum += childLeafCountArr[i];
 					};
 
@@ -109,6 +162,10 @@
 				//console.log(node.attr("type"));
 				if ("root" == node.attr("type")) {
 					var childNodes = node.children("span[name='leftChildren']").children("span");
+					if (childNodes.length < 1) {
+						node.find("> span[name='leftSvg']").html("");
+						return;
+					}
 					var childLeafCountArr = [];
 					for (var i = 0; i < childNodes.length; i++) {
 						if ("leaf" === $(childNodes[i]).attr("type")) {
@@ -118,20 +175,30 @@
 						}
 					}
 
-					var virtualSum = 0;
+					
+					var rightLeafTotalCount = node.children("span[name='rightChildren']").find("span[type='leaf']").length;
 					var leafTotalCount = childLeafCountArr.reduce((a, b) => a + b, 0);
+					var delta = 0;
+					if (rightLeafTotalCount > leafTotalCount) {
+						delta = (rightLeafTotalCount - leafTotalCount)/2;
+					}
+					var virtualSum = 0;
 					for (var i = 0; i < childLeafCountArr.length; i++) {
 						//console.log(virtualSum + (childLeafCountArr[i] - leafTotalCount)/2);
-						$(childNodes[i]).css("top", (gloablVar.arrayHeight * (virtualSum + (childLeafCountArr[i] - leafTotalCount)/2 - (childLeafCountArr[i] - 1)/2))+ "px");
+						$(childNodes[i]).css("top", (GLOBAL_DATA.arrayHeight * (virtualSum + delta))+ "px");
 						virtualSum += childLeafCountArr[i];
 					};
 					
-					console.log(childLeafCountArr);
+					//console.log(childLeafCountArr);
 					node.find("> span[name='leftSvg']").html(drawArray(childLeafCountArr, 0));
 				} else {
 					leftAddRedraw(node.parent().closest("span[name='node']"));
 
 					var childNodes = node.children("span[name='children']").children("span");
+					if (childNodes.length < 1) {
+						node.find("> span[name='svg']").html("");
+						return;
+					}
 					var childLeafCountArr = [];
 					for (var i = 0; i < childNodes.length; i++) {
 						if ("leaf" === $(childNodes[i]).attr("type")) {
@@ -144,7 +211,7 @@
 					var virtualSum = 0;
 					var leafTotalCount = childLeafCountArr.reduce((a, b) => a + b, 0);
 					for (var i = 0; i < childLeafCountArr.length; i++) {
-						$(childNodes[i]).css("top", (gloablVar.arrayHeight * (virtualSum + (childLeafCountArr[i] - leafTotalCount)/2 - (childLeafCountArr[i] - 1)/2 + (leafTotalCount - 1)/2))+ "px");
+						$(childNodes[i]).css("top", (GLOBAL_DATA.arrayHeight * (virtualSum + (childLeafCountArr[i] - leafTotalCount)/2 - (childLeafCountArr[i] - 1)/2 + (leafTotalCount - 1)/2))+ "px");
 						virtualSum += childLeafCountArr[i];
 					};
 
@@ -154,21 +221,21 @@
 
 			function newNodeHtml(leftOrRight) {
 				if (0 === leftOrRight) {//left
-					return "<span name='node' type='leaf' style='position:absolute;white-space: nowrap;'>"
-									+ "<span name='children'></span>"
+					return "<span name='node' type='leaf' style='position:absolute;white-space: nowrap; right:0px;'>"
+									+ "<span name='children' style='position: absolute;'></span>"
 									+ "<span name='svg'></span>"
 									+ "<span name='actions'>"
-									+ 		"<span onclick='leftAdd(event)' style='margin:4px;'>+</span>"
-									+       "<input type='text' style='width:0;padding:0;border:0;margin:0;'>"
-									+		"<span name='txt' style='border:1px solid green;' contenteditable>new</span>"
+									+ 		"<span onclick='addNode(0, event)' style='margin:4px;'>+</span>"
+									+		"<span name='txt' contenteditable>new</span>"
+									+ 		"<span onclick='removeNode(0, event)' style='margin:4px;'>-</span>"
 									+ "</span>"
 							+ "</span>";
 				} else {//right
 					return  "<span name='node' type='leaf' style='position:absolute;'>"
 									+ "<span name='actions'>"
-									+	 	"<input type='text' style='width:0;padding:0;border:0;margin:0;'>"
-									+		"<span name='txt' style='border:1px solid green;' contenteditable>new</span>"
-									+ 		"<span onclick='rightAdd(event)' style='margin:4px;'>+</span>"
+									+ 		"<span onclick='removeNode(1, event)' style='margin:4px;'>-</span>"
+									+		"<span name='txt' contenteditable>new</span>"
+									+ 		"<span onclick='addNode(1, event)' style='margin:4px;'>+</span>"
 									+  "</span>"
 								  	+ "<span name='svg'></span>"
 								  	+ "<span name='children'></span>"
@@ -176,33 +243,45 @@
 				}
 			}
 
-			function rightAdd(event) {
+			function addNode(leftOrRight, event) {
 				var node  = $(event.target).closest("span[name='node']");
 				if ("leaf" === node.attr("type")) {
 					node.attr("type", "stem");
 				}
-				
+
 				if ("root" == node.attr("type")) {
-					node.find("> span[name='rightChildren']").append(newNodeHtml(1));
+					if (GLOBAL_DATA.LEFT_SIDE === leftOrRight) {
+						node.find("> span[name='leftChildren']").append(newNodeHtml(leftOrRight));
+					} else {
+						node.find("> span[name='rightChildren']").append(newNodeHtml(leftOrRight));
+					}
 				} else {
-					node.find("> span[name='children']").append(newNodeHtml(1));
+					node.find("> span[name='children']").append(newNodeHtml(leftOrRight));
 				}
-				rightAddRedraw(node);
+
+				if (GLOBAL_DATA.LEFT_SIDE === leftOrRight) {
+					leftAddRedraw(node);
+				} else {
+					rightAddRedraw(node);
+				}
 			}
 
-			function leftAdd(event) {
-				var node  = $(event.target).closest("span[name='node']");
-				if ("leaf" === node.attr("type")) {
-					node.attr("type", "stem");
+			function removeNode(leftOrRight, event) {
+				var curNode  = $(event.target).closest("span[name='node']");
+				var parentNode = curNode.parent().closest("span[name='node']");
+
+				curNode.remove();
+				if ("root" != parentNode.attr("type") && parentNode.find("span[name='node']").length ==0) {
+					parentNode.attr("type", "leaf") 
 				}
-				
-				if ("root" == node.attr("type")) {
-					node.find("> span[name='leftChildren']").append(newNodeHtml(0));
+
+				if (0 === leftOrRight) {
+					leftAddRedraw(parentNode);
 				} else {
-					node.find("> span[name='children']").append(newNodeHtml(0));
+					rightAddRedraw(parentNode);
 				}
-				leftAddRedraw(node);
 			}
+
 		</script>
 	</body>
 </html>
