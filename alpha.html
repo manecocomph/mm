@@ -5,7 +5,7 @@
 		<meta charset="UTF-8">
 		<script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha256-/SIrNqv8h6QGKDuNoLGA4iret+kyesCkHGzVUUV0shc=" crossorigin="anonymous"></script>
 		<script src="http://cdn.bootcss.com/html2canvas/0.5.0-beta4/html2canvas.js"></script>
-		<style type="text/css">
+		<style id="internalCss" type="text/css">
 			html, body {
 			    margin: 0;
 			    height: 100%;
@@ -14,8 +14,8 @@
 			#stage {
 				background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAT0lEQVQ4T2N8/fr/fwYiADfPP4avX5gIqmQEGSgqyshISOW373//c3EyE1Q3aiDukBwNQ5xhQ/1kAwpsQomaFHnqu3A06+EM/9GcQr+cAgBGqZrSrFyxegAAAABJRU5ErkJggg=='); 
 				background-color: rgb(255, 255, 255); 
-				width: 1200px; 
-				height: 600px;
+				width: 2000px; 
+				height: 1000px;
 			}
 
 			span[name='txt'] {
@@ -35,6 +35,12 @@
 		</style>
 	</head>
 	<body>
+		<div name="menu">
+			<input id="btnDownloadAsImage" type="button" value="Download as Image">
+			<input id="btnDownloadAsHtml" type="button" value="Download as Html">
+			<input id="btnExportAsSource" type="button" value="Export">
+			<input id="importFromSource" type="file">
+		</div>
 		<div id="stage">
 			<span id="rootNode" name="node" type="root" style="vertical-align: middle; position: relative; top: 50%; left:48%;">
 				<span name='leftChildren' style='position: absolute;'></span>
@@ -49,7 +55,9 @@
 				<span name='rightChildren'></span>
 			</span>
 		</div>
-
+		<div class="hidden">
+			<a id="downloadAsImage" href="" target="_blank">download image</a>
+		</div>
 		<script type="text/javascript">
 			var GLOBAL_DATA = {
 				LEFT_SIDE:0,
@@ -58,12 +66,35 @@
 				arrayHeight:40
 			};
 
-			function drawArray(childLeafCountArr, leftOrRight) {
+			function drawToLeftArray(childLeafCountArr) {
 				var count = childLeafCountArr.reduce((a, b) => a + b, 0);
 				var svgWidth = GLOBAL_DATA.arrayWidth;
 				var svgHeight = GLOBAL_DATA.arrayHeight * (count - 1) + 20;
 
-				var svgHtml = "<svg name='svg' height='" + svgHeight + "' width='" + (svgWidth + 10) + "' style='vertical-align:middle;" + (0 == leftOrRight ? "transform: rotateY(180deg);" : "") + "'>";
+				var svgHtml = "<svg name='svg' height='" + svgHeight + "' width='" + (svgWidth + 10) + "' style='vertical-align:middle;'>";
+				svgHtml += "<defs><marker id='from' style='stroke: #ff7f0e; fill: #ff7f0e; stroke-width: 1.5px;' viewBox='0 0 10 10' refX='0' refY='5' markerWidth='6' markerHeight='6' orient='auto'><path d='M 0 0 L 10 5 L 0 10 z'></path></marker></defs>";
+				svgHtml += "<g transform='translate(10,0)'>";
+
+				var fromHeight = svgHeight/2;
+				var foreSum = 0;
+				for (var i = 0; i < childLeafCountArr.length; i++) {
+					var toHeight = 10 + (foreSum + (childLeafCountArr[i] - 1)/ 2) * GLOBAL_DATA.arrayHeight;
+					svgHtml += "<path style='stroke: #ff7f0e; fill: none; stroke-width: 1.5px;' d='M" + svgWidth + "," + fromHeight + "C" + svgWidth/2 + "," + fromHeight + " " + svgWidth/2 + "," + toHeight + " 0," + toHeight + "' marker-end='url(#from)' />";
+					foreSum += childLeafCountArr[i];
+				}
+
+				svgHtml += "</g>";
+				svgHtml += "</svg>";
+
+				return svgHtml;
+			}
+			
+			function drawToRightArray(childLeafCountArr) {
+				var count = childLeafCountArr.reduce((a, b) => a + b, 0);
+				var svgWidth = GLOBAL_DATA.arrayWidth;
+				var svgHeight = GLOBAL_DATA.arrayHeight * (count - 1) + 20;
+
+				var svgHtml = "<svg name='svg' height='" + svgHeight + "' width='" + (svgWidth + 10) + "' style='vertical-align:middle;'>";
 				svgHtml += "<defs><marker id='to' style='stroke: #ff7f0e; fill: #ff7f0e; stroke-width: 1.5px;' viewBox='0 0 10 10' refX='0' refY='5' markerWidth='6' markerHeight='6' orient='auto'><path d='M 0 0 L 10 5 L 0 10 z'></path></marker></defs>";
 				svgHtml += "<g transform='translate(0,0)'>";
 
@@ -79,6 +110,16 @@
 				svgHtml += "</svg>";
 
 				return svgHtml;
+			}
+			
+			function drawArray(childLeafCountArr, leftOrRight) {
+				if (GLOBAL_DATA.LEFT_SIDE === leftOrRight) {//we can't use transform:retateY(180deg), because htmlToCanvals() not support
+					return drawToLeftArray(childLeafCountArr);
+				} else if (GLOBAL_DATA.RIGHT_SIDE === leftOrRight) {//we can't use transform:retateY(180deg), because htmlToCanvals() not support
+					return drawToRightArray(childLeafCountArr);
+				} 
+				
+				return null;
 			}
 
 			//count how many leaf from these nodes
@@ -294,6 +335,65 @@
 				$("#rootNode").css("top", rootNodeTop + "px");
 				$("#rootNode").css("left", rootNodeLeft + "px")
 			}
+			
+			$("#btnDownloadAsImage").click(function(){
+				html2canvas($("#stage"), {
+					onrendered: function(canvas) {
+						var fileName = $("#rootNode > span[name=actions] > span[name='txt']").text();
+						if (null == fileName || "" == fileName) {
+							fileName = "mindmap";
+						}
+						$("#downloadAsImage").attr("href", canvas.toDataURL("image/png"));
+						$("#downloadAsImage").attr("download", fileName + ".png");
+						$("#downloadAsImage")[0].click();
+					}
+				});
+			});
+			
+			$("#btnDownloadAsHtml").click(function(){
+				var fileName = $("#rootNode > span[name=actions] > span[name='txt']").text();
+				if (null == fileName || "" == fileName) {
+					fileName = "mindmap";
+				}
+				var css = $("#internalCss").html();
+				var mindmapHtml = $("#stage").html();
+				$("#downloadAsImage").attr("href", "data:text/plain;charset=UTF-8,<style type='text/css'>" + css + "</style>" +  mindmapHtml);
+				$("#downloadAsImage").attr("download", fileName + ".html");
+				$("#downloadAsImage")[0].click();
+			});
+			
+			$("#btnExportAsSource").click(function(){
+				var fileName = $("#rootNode > span[name=actions] > span[name='txt']").text();
+				if (null == fileName || "" == fileName) {
+					fileName = "mindmap";
+				}
+				
+				var mindmapHtml = $("#stage").html();
+				$("#downloadAsImage").attr("href", "data:text/plain;charset=UTF-8," + mindmapHtml);
+				$("#downloadAsImage").attr("download", fileName + ".txt");
+				$("#downloadAsImage")[0].click();
+			});
+			
+			$("#importFromSource").change(function(){
+				var file = this.files[0];
+				name = file.name;
+				size = file.size;
+				type = file.type;
+				
+				if(file.name.length < 4) {
+					alert("file is not supported!");
+				} else if(file.size > 100000) {
+					alert("The file is too big!");
+				} else if(file.type != 'text/plain') {
+					alert("The file does not match text/plain!");
+				} else { 
+					var reader = new FileReader();
+					reader.readAsText(file);
+					reader.onload = function(e) {
+						$("#stage").html(e.target.result);
+					};
+				}
+			});
 		</script>
 	</body>
 </html>
